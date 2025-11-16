@@ -4,6 +4,7 @@ from typing import Annotated
 from langgraph.graph.message import add_messages
 from langgraph.graph import StateGraph, START, END
 from langchain.chat_models import init_chat_model
+from langgraph.checkpoint.mongodb import MongoDBSaver
 
 load_dotenv()
 
@@ -45,6 +46,24 @@ graph_builder.add_edge("chatbot", END)
 
 graph = graph_builder.compile()
 
-updated_state = graph.invoke({"message": ["Hello, void"]})
+def compile_graphwithcheckpointer(checkpointer):
+    return graph_builder.compile(checkpointer=checkpointer)
+   
+       
+DB_URI="mongodb://localhost:27017/langgraph"
+with MongoDBSaver.from_conn_string(DB_URI) as checkpointer:
 
-print("\nUpdated State:", updated_state)
+    graph_with_checkpoint=compile_graphwithcheckpointer(checkpointer=checkpointer)
+
+    config={
+        "configurable":{
+            "thread_id":"Divyansh"
+        }
+    }
+
+    updated_state = graph_with_checkpoint.invoke(State({"message": ["Hello, My name is Divyansh Singh"]}),config=config)
+
+    print("\nUpdated State:", updated_state)
+
+
+    #In my checkpointer one message will be under Divyans
